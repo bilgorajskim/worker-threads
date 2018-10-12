@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+Check out the dev tools console.
+<script type="module">
+    import Thread from "./../../dist/Thread.js";
+    async function start() {
+        const thread = new Thread("main");
+        const personOne = new Worker("./person.js", {
+            type: "module"
+        });
+        const personTwo = new Worker("./person.js", {
+            type: "module"
+        });
+        const nameGenerator = new Worker("./nameGenerator.js", {
+            type: "module"
+        });
+        // Link workers
+        thread.link("personOne", personOne);
+        thread.link("personTwo", personTwo);
+        thread.link("nameGenerator", nameGenerator);
+        // Open all thread connections
+        thread.open();
+        // Wait until all thread connections are ready for communication
+        await thread.waitForRemotes();
+
+        // Now let's link our shared worker to worker one and two
+        const channelOne = new MessageChannel();
+        const channelTwo = new MessageChannel();
+        await thread.access("nameGenerator")
+            .call("linkPerson", channelOne.port1, [channelOne.port1]);
+        await thread.access("nameGenerator")
+            .call("linkPerson", channelTwo.port1, [channelTwo.port1]);
+        await thread.access("personOne")
+            .call("linkNameGenerator", channelOne.port2, [channelOne.port2]);
+        await thread.access("personTwo")
+            .call("linkNameGenerator", channelTwo.port2, [channelTwo.port2]);
+
+        console.log("Main thread and workers are ready");
+        let respOne = await thread.access("personOne").call("greet", "a Bread Scientist");
+        let respTwo = await thread.access("personTwo").call("greet", "the Director of Sandbags");
+        console.log(respOne);
+        console.log(respTwo);
+    }
+
+    start();
+</script>

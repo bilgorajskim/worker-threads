@@ -1,0 +1,16 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+      "module": "esnext",
+      "noImplicitAny": true,
+      "outDir": "dist",
+      "target": "esnext",
+      "sourceMap": true
+  },
+  "exclude": [
+      "node_modules"
+  ],
+  "types" : [
+      "jasmine"
+  ]
+}

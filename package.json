@@ -1,0 +1,19 @@
+{
+    "name": "@bilgorajskim/worker-threads",
+    "version": "0.1.0",
+    "license": "MIT",
+    "main": "./dist/index.js",
+    "scripts": {
+        "build": "tsc",
+        "test": "karma start karma.conf.js"
+    },
+    "devDependencies": {
+        "@types/jasmine": "^2.8.9",
+        "jasmine": "^3.2.0",
+        "karma": "^3.0.0",
+        "karma-chrome-launcher": "^2.2.0",
+        "karma-jasmine": "^1.1.2",
+        "karma-typescript": "^3.0.13",
+        "typescript": "^3.1.1"
+    }
+}

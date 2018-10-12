@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+Check out the dev tools console.
+<script type="module">
+    import Thread from "./../../dist/Thread.js";
+    async function start() {
+        const thread = new Thread("main");
+        const worker = new Worker("./worker.js", {
+            type: "module"
+        });
+        // Link worker
+        thread.link("worker", worker);
+        // Open all thread connections
+        thread.open();
+        // Wait until all thread connections are ready for communication
+        await thread.waitForRemotes();
+        console.log("Main thread and worker are ready");
+        thread.access("worker").emit("someEvent", {
+            test: "abc"
+        });
+    }
+
+    start();
+</script>

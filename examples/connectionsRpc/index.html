@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+Check out the dev tools console.
+<script type="module">
+    import ThreadConnection from "./../../dist/ThreadConnection.js";
+    async function start() {
+        const worker = new Worker("./worker.js", {
+            type: "module"
+        });
+        const threadConnection = new ThreadConnection(worker, "main");
+        threadConnection.open();
+        await threadConnection.waitForRemote();
+        console.log("Main ready");
+        let resp = await threadConnection.call("foo");
+        console.log("Response", resp);
+    }
+
+    start();
+</script>
