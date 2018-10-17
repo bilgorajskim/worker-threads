@@ -5,7 +5,8 @@
       "noImplicitAny": true,
       "outDir": "dist",
       "target": "esnext",
-      "sourceMap": true
+      "sourceMap": true,
+      "declaration": true
   },
   "exclude": [
       "node_modules"
