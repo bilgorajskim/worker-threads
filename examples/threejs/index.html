@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+Check out the dev tools console.
+<script type="module">
+    import Thread from "./../../dist/Thread.js";
+    import {makeCanvas, runBenchmark} from "./utils.js";
+    var domCanvas = document.createElement("canvas");
+    domCanvas.width = 100;
+    domCanvas.height = 100;
+    var domCanvas2 = document.createElement("canvas");
+    domCanvas2.width = 100;
+    domCanvas2.height = 100;
+    let offscreenCanvas = domCanvas2.transferControlToOffscreen();
+
+    async function start() {
+        const thread = new Thread("main");
+        const worker = new Worker("./worker.js", {
+            type: "module"
+        });
+        // Link worker
+        thread.link("worker", worker);
+        // Open all thread connections
+        thread.open();
+        // Wait until all thread connections are ready for communication
+        await thread.waitForRemotes();
+        console.log("Main thread and worker are ready");
+        let animate = makeCanvas(domCanvas);
+        console.log("Running benchmark on main thread");
+        console.time();
+        await runBenchmark(animate);
+        console.timeEnd();
+        
+        let resp = await thread.access("worker")
+        .call("benchmark", offscreenCanvas, [offscreenCanvas]);
+        console.log("Response from worker:", resp);
+    }
+
+    start();
+</script>

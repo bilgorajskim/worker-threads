@@ -15,12 +15,8 @@ type ProcedureHandlerContext = {
     }
 };
 
-/**
- * Zamiast isrpcrequest, isrpcrespone powinno być rpcCallId i isResponse
- */
-
 export default class ThreadConnection<T> {
-    public readonly port: MessagePort;
+    public readonly port: MessagePort | WindowOrWorkerGlobalScope;
     private subscribers: Map<any, Array<MessageListener>> = new Map();
     private procedures: Map<any, ProcedureHandler> = new Map();
     private resolveStart?: () => any;
@@ -75,7 +71,11 @@ export default class ThreadConnection<T> {
                         }
                     };
                     await procedure(ctx);
-                    this.port.postMessage([topic, ctx.response.data, messageId, false, true], ctx.response.transfer);
+                    if (this.port instanceof MessagePort) {
+                        this.port.postMessage([topic, ctx.response.data, messageId, false, false], ctx.response.transfer);
+                    } else {
+                        (this.port as Window).postMessage([topic, ctx.response.data, messageId, false, true], "*", ctx.response.transfer);
+                    }
                     this.updateMessageCounter();
                     return;
                 }
@@ -149,7 +149,11 @@ export default class ThreadConnection<T> {
      * @param transferables Objects to be transferred 
      */
     emit(topic: any, data?: any, transferables?: Array<any>) {
-        this.port.postMessage([topic, data, this.messageCounter, false, false], transferables);
+        if (this.port instanceof MessagePort) {
+            this.port.postMessage([topic, data, this.messageCounter, false, false], transferables);
+        } else {
+            (this.port as Window).postMessage([topic, data, this.messageCounter, false, false], "*", transferables);
+        }
         this.updateMessageCounter();
     }
 
@@ -170,7 +174,11 @@ export default class ThreadConnection<T> {
     call(topic: any, data?: any, transferables?: Array<any>) {
         return new Promise(resolve => {
             this.callPromises.set(this.messageCounter, resolve);
-            this.port.postMessage([topic, data, this.messageCounter, true, false], transferables);
+            if (this.port instanceof MessagePort) {
+                this.port.postMessage([topic, data, this.messageCounter, true, false], transferables);
+            } else {
+                (this.port as Window).postMessage([topic, data, this.messageCounter, true, false], "*", transferables);
+            }
             this.updateMessageCounter();
         });
     }
