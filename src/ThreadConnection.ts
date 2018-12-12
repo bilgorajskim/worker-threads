@@ -15,8 +15,10 @@ type ProcedureHandlerContext = {
     }
 };
 
+const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+
 export default class ThreadConnection<T> {
-    public readonly port: MessagePort | WindowOrWorkerGlobalScope;
+    public readonly port: MessagePort;
     private subscribers: Map<any, Array<MessageListener>> = new Map();
     private procedures: Map<any, ProcedureHandler> = new Map();
     private resolveStart?: () => any;
@@ -71,11 +73,7 @@ export default class ThreadConnection<T> {
                         }
                     };
                     await procedure(ctx);
-                    if (this.port instanceof MessagePort) {
-                        this.port.postMessage([topic, ctx.response.data, messageId, false, false], ctx.response.transfer);
-                    } else {
-                        (this.port as Window).postMessage([topic, ctx.response.data, messageId, false, true], "*", ctx.response.transfer);
-                    }
+                    this.port.postMessage([topic, ctx.response.data, messageId, false, true], ctx.response.transfer);
                     this.updateMessageCounter();
                     return;
                 }
@@ -141,6 +139,18 @@ export default class ThreadConnection<T> {
         subscribers.push(listener);
         this.subscribers.set(topic, subscribers);
     }
+
+    off(topic: any, listener: MessageListener) {
+        let subscribers = this.subscribers.get(topic);
+        if (!subscribers) {
+            return;
+        }
+        const subscriberIndex = subscribers.indexOf(listener);
+        if (subscriberIndex === -1) {
+            return;
+        }
+        delete subscribers[subscriberIndex];
+    }
     
     /**
      * Send a message
@@ -149,11 +159,7 @@ export default class ThreadConnection<T> {
      * @param transferables Objects to be transferred 
      */
     emit(topic: any, data?: any, transferables?: Array<any>) {
-        if (this.port instanceof MessagePort) {
-            this.port.postMessage([topic, data, this.messageCounter, false, false], transferables);
-        } else {
-            (this.port as Window).postMessage([topic, data, this.messageCounter, false, false], "*", transferables);
-        }
+        this.port.postMessage([topic, data, this.messageCounter, false, false], transferables);
         this.updateMessageCounter();
     }
 
@@ -174,11 +180,7 @@ export default class ThreadConnection<T> {
     call(topic: any, data?: any, transferables?: Array<any>) {
         return new Promise(resolve => {
             this.callPromises.set(this.messageCounter, resolve);
-            if (this.port instanceof MessagePort) {
-                this.port.postMessage([topic, data, this.messageCounter, true, false], transferables);
-            } else {
-                (this.port as Window).postMessage([topic, data, this.messageCounter, true, false], "*", transferables);
-            }
+            this.port.postMessage([topic, data, this.messageCounter, true, false], transferables);
             this.updateMessageCounter();
         });
     }

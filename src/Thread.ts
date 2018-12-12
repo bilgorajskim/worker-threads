@@ -14,7 +14,7 @@ export default class Thread<T> {
         return this.connections.get(thread);
     }
 
-    public link(threadType: T, port: MessagePort | WindowOrWorkerGlobalScope) {
+    public link(threadType: T, port: MessagePort) {
         const connection = new ThreadConnection(port as MessagePort, this.threadType);
         this.subscribers.forEach((sub, topic) => {
             sub.forEach(listener => {
@@ -51,6 +51,21 @@ export default class Thread<T> {
         this.subscribers.set(topic, subscribers);
         this.connections.forEach(connection => {
             connection.on(topic, listener);
+        });
+    }
+
+    off(topic: any, listener: MessageListener) {
+        let subscribers = this.subscribers.get(topic);
+        if (!subscribers) {
+            return;
+        }
+        const subscriberIndex = subscribers.indexOf(listener);
+        if (subscriberIndex === -1) {
+            return;
+        }
+        delete subscribers[subscriberIndex];
+        this.connections.forEach(connection => {
+            connection.off(topic, listener);
         });
     }
 
